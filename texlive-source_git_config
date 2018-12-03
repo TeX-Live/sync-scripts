@@ -1,0 +1,16 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[svn-remote "svn"]
+	url = svn://tug.org/texlive
+	fetch = trunk/Build/source:refs/remotes/trunk
+	branches = branches/*/Build/source:refs/remotes/*
+	tags = tags/*/Build/source:refs/remotes/tags/*
+[svn]
+        authorsfile = /home/norbert/git-svn-repos/texlive.usermap
+[remote "origin"]
+	url = git@github-push:TeX-Live/texlive-source.git
+	fetch = +refs/remotes/*:refs/remotes/origin/*
+	push = refs/remotes/*:refs/heads/*

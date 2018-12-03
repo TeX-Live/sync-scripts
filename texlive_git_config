@@ -1,0 +1,16 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[svn-remote "svn"]
+	url = svn://preining@tug.org/texlive
+	fetch = trunk:refs/remotes/trunk
+	branches = branches/*:refs/remotes/*
+	tags = tags/*:refs/remotes/tags/*
+[svn]
+	authorsfile = /home/norbert/git-svn-repos/texlive.usermap
+[remote "origin"]
+	url = git@tldeployment:texlive.git
+	fetch = +refs/remotes/*:refs/remotes/origin/*
+	push = refs/remotes/*:refs/heads/*

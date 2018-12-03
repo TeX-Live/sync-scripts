@@ -1,0 +1,16 @@
+[core]
+	repositoryformatversion = 0
+	filemode = true
+	bare = false
+	logallrefupdates = true
+[svn-remote "svn"]
+	url = https://serveur-svn.lri.fr/svn/modhel/luatex
+	fetch = trunk:refs/remotes/trunk
+	branches = branches/*:refs/remotes/*
+	tags = tags/*:refs/remotes/tags/*
+[svn]
+	authorsfile = /home/norbert/git-svn-repos/luatex.usermap
+[remote "origin"]
+	url = git@githubLuatex2:TeX-Live/luatex.git
+	fetch = +refs/remotes/*:refs/remotes/origin/*
+	push = refs/remotes/*:refs/heads/*

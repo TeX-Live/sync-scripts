@@ -1,0 +1,113 @@
+#!/bin/bash
+# cron job for updating git-svn branches and pushing it to github for ci
+#
+# USAGE
+#  git-svn-syncer [-v] --svn-branch texlive-source
+#  git-svn-syncer [-v] luatex
+
+set -e
+
+if [ "x$1" = "x-v" ] ; then
+  silent=false
+  shift
+else
+  silent=true
+fi
+
+if [ "x$1" = "x--new" ] ; then
+  masterBranch=trunk
+  newMode=true
+  shift
+else
+  masterBranch=master
+  newMode=false
+fi
+
+
+if [ "x$1" = "x--svn-branch" ] ; then
+  doSvnBranch=true
+  shift
+else
+  doSvnBranch=false
+fi
+
+if [ "x$1" = "x--no-push" ] ; then
+  doNoPush=true
+  shift
+else
+  doNoPush=false
+fi
+
+BASEDIR=/home/norbert/git-svn-repos
+
+GITSVNSOURCE=$BASEDIR/$1
+
+if [ ! -d $GITSVNSOURCE ] ; then
+    echo "No directory $GITSVNSOURCE, exit." >&2
+    exit 1
+fi
+
+GIT="git --no-pager"
+
+quiet_git() {
+    stdout=$(tempfile)
+    stderr=$(tempfile)
+
+    if $silent ; then
+    	if ! $GIT "$@" </dev/null >$stdout 2>$stderr; then
+	    echo "STDOUT of git command:"
+	    cat $stdout
+	    echo "************"
+            cat $stderr >&2
+            rm -f $stdout $stderr
+            exit 1
+        fi
+    else
+	$GIT "$@" </dev/null
+    fi
+
+    rm -f $stdout $stderr
+}
+
+cd $GITSVNSOURCE
+
+quiet_git checkout $masterBranch
+quiet_git svn fetch --all
+# actually not necessary in new mode
+# but we do it since we copy files from it to the installer repo
+# so we want the latest files checked out
+if $newMode ; then
+    quiet_git svn rebase
+    : nothing to be done
+else
+    quiet_git svn rebase
+fi
+
+if $doSvnBranch ; then
+    # now update the git svn data
+    quiet_git checkout git-svn-data
+    cp .git/svn/refs/remotes/git-svn/index .
+    cp .git/refs/remotes/git-svn .
+    git diff --quiet && git diff --staged --quiet || quiet_git commit -a -m "updating git svn data"
+    quiet_git checkout master
+fi
+# not necessary anymore, trave.yml is contained in master now
+#quiet_git checkout travis-ci
+# don't use [skip ci] here because we only built the 
+# last commit, which would stop building
+#quiet_git merge master -m "merging master"
+
+if $doNoPush ; then
+    : ignore
+else
+    # the first pushes all configured push settings, see the
+    # git/svn document
+    # the second one pushes all branches under ref/heads
+    if $newMode ; then
+        quiet_git push
+    else
+        quiet_git push --all
+    fi
+fi
+
+

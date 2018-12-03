@@ -1,0 +1,13 @@
+git for-each-ref --format="%(refname:short) %(objectname)" refs/remotes/tags | \
+while read BRANCH REF
+do 
+  #TAG_NAME=${BRANCH#*/}
+  TAG_NAME=$(basename $BRANCH)
+  BODY="$(git log -1 --format=format:%s $REF)"
+  COMMITDATE="$(git log -1 --pretty=format:"%ci" $REF)"
+  echo "TAG_NAME     = $TAG_NAME"
+  echo "COMMIT MSG   = $BODY"
+  echo "COMMIT DATE  = $COMMITDATE"
+  echo "REF          = $REF"
+  #env GIT_COMMITTER_DATE="$COMMITDATE" git tag -a -m "$BODY" $TAG_NAME $REF^
+done

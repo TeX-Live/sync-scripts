@@ -1,0 +1,85 @@
+#!/bin/bash
+# cron jpb for updating the installer from texlive
+
+set -e
+
+if [ "x$1" = "x-v" ] ; then
+  silent=false
+  shift
+else
+  silent=true
+fi
+
+if [ "x$1" = "x--no-push" ] ; then
+  doNoPush=true
+  shift
+else
+  doNoPush=false
+fi
+
+BASEDIR=/home/norbert/git-svn-repos
+
+INSTALLER=$BASEDIR/installer
+TLMASTER=$BASEDIR/texlive/Master
+
+if [ ! -d $INSTALLER ] ; then
+    echo "No directory $INSTALLER, exit." >&2
+    exit 1
+fi
+if [ ! -d $TLMASTER ] ; then
+    echo "No directory $TLMASTER, exit." >&2
+    exit 1
+fi
+
+GIT="git --no-pager"
+
+quiet_git() {
+    stdout=$(tempfile)
+    stderr=$(tempfile)
+
+    if $silent ; then
+    	if ! $GIT "$@" </dev/null >$stdout 2>$stderr; then
+	    echo "STDOUT of git command:"
+	    cat $stdout
+	    echo "************"
+            cat $stderr >&2
+            rm -f $stdout $stderr
+            exit 1
+        fi
+    else
+	$GIT "$@" </dev/null
+    fi
+
+    rm -f $stdout $stderr
+}
+
+cd $INSTALLER
+quiet_git checkout master
+for i in TeXLive gpg installer tlperl translations ; do
+	rm -r tlpkg/$i
+	cp -a $TLMASTER/tlpkg/$i tlpkg/
+done
+# remove some unnecessary stuff
+rm -rf tlpkg/installer/lz4
+for i in LICENSE.CTAN LICENSE.TL install-tl install-tl-advanced.bat install-tl-windows.bat release-texlive.txt ; do
+	cp $TLMASTER/$i .
+done
+for i in `find texmf-dist -type f` ; do
+	cp $TLMASTER/$i $i
+done
+
+changednewfiles=$(git status --porcelain | awk '{print$2}')
+if [ -n "$changednewfiles" ] ; then
+	quiet_git add $changednewfiles
+	quiet_git commit -m "updating installer data"
+fi
+
+# git diff --quiet && git diff --staged --quiet || quiet_git commit -a -m "updating installer data"
+
+if $doNoPush ; then
+    : ignore
+else
+    quiet_git push
+fi
+
+
